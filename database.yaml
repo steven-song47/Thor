@@ -1,0 +1,7 @@
+dev:
+  mysql:
+    host: 127.0.0.1
+    username: root
+    password: s0095296..
+    port: 3306
+    database: test
