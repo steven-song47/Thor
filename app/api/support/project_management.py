@@ -20,10 +20,27 @@ class OperateDB:
         else:
             return o_id
 
-    def _check_tag(self, tag_str):
+    def _check_case_exist(self, case_id):
+        result = False
+        if isinstance(case_id, str):
+            case_id = int(case_id)
+        if isinstance(case_id, int):
+            if Case.query.filter_by(id=case_id).count():
+                result = True
+        return result
+
+    def _tag_str_to_db(self, tag_str):
         tag_list = tag_str.split(",")
         tag_list = ["(" + tag + ")" for tag in tag_list if tag != '']
-        tag_str = ",".join(tag_list)
+        tag = ",".join(tag_list)
+        return tag
+
+    def _tag_db_to_str(self, tag):
+        tag_str = ""
+        if tag is not None:
+            tag_list = tag.split(",")
+            tag_list = [tag[1:-1] for tag in tag_list if tag != '']
+            tag_str = ",".join(tag_list)
         return tag_str
 
     def get_tags(self):
@@ -92,6 +109,13 @@ class OperateDB:
         else:
             card_id = ""
         return card_id
+
+    def get_cardIndex_by_cardID(self, card_id):
+        card_index = ""
+        card = db.session.query(Card.number).filter(Card.id == card_id).first()
+        if card:
+            card_index = card[0]
+        return card_index
 
     def get_actions(self, action_type, card_id):
         actions = list()
@@ -282,7 +306,7 @@ class OperateDB:
 
     def add_case(self, **args):
         case_id = ""
-        if set(args.keys()) == {"name", "module", "given", "when", "then", "level", "tag", "auto"}:
+        if set(args.keys()).issuperset({"name", "module", "given", "when", "then", "level", "tag", "auto"}):
             now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             try:
                 case = Case()
@@ -292,60 +316,68 @@ class OperateDB:
                 case.when = args["when"]
                 case.then = args["then"]
                 case.level = args["level"]
-                case.tag = self._check_tag(args["tag"])
-                case.auto = args["auto"]
+                case.tag = self._tag_str_to_db(args["tag"])
+                case.auto = True if args["auto"] == "Y" else False
                 case.update_time = now_time
                 case.create_time = now_time
                 case.review = "created"
                 case.effect = "active"
-                case.result = "created"
+                case.result = "Created"
                 case.creator = None
                 db.session.add(case)
                 db.session.flush()
                 case_id = case.id
                 db.session.commit()
                 db.session.close()
-            except:
-                pass
+            except Exception as e:
+                print(e)
         else:
             print("[func:add_case] 参数不匹配")
         return case_id
 
-    def update_case(self, **args):
-        if "id" in args:
-            if args["id"]:
-                update_sql = dict()
-                now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                if "name" in args:
-                    update_sql["name"] = args["name"]
-                if "module" in args:
-                    update_sql["module"] = args["module"]
-                if "given" in args:
-                    update_sql["given"] = args["given"]
-                if "when" in args:
-                    update_sql["when"] = args["when"]
-                if "then" in args:
-                    update_sql["then"] = args["then"]
-                if "level" in args:
-                    update_sql["level"] = args["level"]
-                if "tag" in args:
-                    update_sql["tag"] = self._check_tag(args["tag"])
-                if "auto" in args:
-                    update_sql["auto"] = args["auto"]
-                if "review" in args:
-                    update_sql["review"] = args["review"]
-                if "effect" in args:
-                    update_sql["effect"] = args["effect"]
-                if "result" in args:
-                    update_sql["result"] = args["result"]
-                update_sql["update_time"] = now_time
-                try:
-                    db.session.query(Case).filter(Case.id == args["id"]).update(update_sql)
-                    db.session.commit()
-                except:
-                    pass
-            else:
-                self.add_case(**args)
+    def update_cases(self, cases):
+        updated_cases = list()
+        for case in cases:
+            if "id" in case:
+                if not self._check_case_exist(case["id"]):
+                    case_id = self.add_case(**case)
+                    case["id"] = case_id
+                    updated_cases.append(case)
+                else:
+                    update_sql = dict()
+                    # case["id"]存在传入的是个string的情况
+                    case_id = int(case["id"])
+                    now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    if "name" in case:
+                        update_sql["name"] = case["name"]
+                    if "module" in case:
+                        update_sql["module"] = case["module"]
+                    if "given" in case:
+                        update_sql["given"] = case["given"]
+                    if "when" in case:
+                        update_sql["when"] = case["when"]
+                    if "then" in case:
+                        update_sql["then"] = case["then"]
+                    if "level" in case:
+                        update_sql["level"] = case["level"]
+                    if "tag" in case:
+                        update_sql["tag"] = self._tag_str_to_db(case["tag"])
+                    if "auto" in case:
+                        update_sql["auto"] = True if case["auto"] == "Y" else False
+                    if "review" in case:
+                        update_sql["review"] = case["review"]
+                    if "effect" in case:
+                        update_sql["effect"] = case["effect"]
+                    if "result" in case:
+                        update_sql["result"] = case["result"]
+                    update_sql["update_time"] = now_time
+                    try:
+                        db.session.query(Case).filter(Case.id == case_id).update(update_sql)
+                        db.session.commit()
+                        updated_cases.append(case)
+                    except Exception as e:
+                        print("[ERROR] case_id: %s update fail (%s)" % (case_id, e))
+        return updated_cases
 
     def get_cases(self, **filters):
         filter_maps = list()
@@ -383,9 +415,9 @@ class OperateDB:
                                      Case.create_time, Case.update_time).filter(*filter_maps).all()
             cases = [
                 {"id": case[0], "name": case[1], "module": case[2], "given": case[3], "when": case[4], "then": case[5],
-                 "level": case[6], "tag": [item[1:-1] for item in case[7].split(",") if item != ''],
-                 "auto": "Y" if case[8] else "N", "review": case[9], "result": case[10], "effect": case[11],
-                 "creator": case[12], "create_time": case[13], "update_time": case[14]} for case in cases]
+                 "level": case[6], "tag": self._tag_db_to_str(case[7]), "auto": "Y" if case[8] else "N",
+                 "review": case[9], "result": case[10], "effect": case[11], "creator": case[12],
+                 "create_time": case[13], "update_time": case[14]} for case in cases]
         except:
             pass
         return cases
@@ -420,8 +452,11 @@ class OperateDB:
             update_sql["result"] = args["result"]
         update_sql["update_time"] = now_time
         try:
-            db.session.query(CaseRelatedCard).filter(CaseRelatedCard.case == case_id,
-                                                     CaseRelatedCard.card == card_id).update(update_sql)
+            if not CaseRelatedCard.query.filter(CaseRelatedCard.case==case_id, CaseRelatedCard.card==card_id).count():
+                self.add_relationship_card_and_case(card_id, case_id)
+            else:
+                db.session.query(CaseRelatedCard).filter(CaseRelatedCard.case == case_id,
+                                                         CaseRelatedCard.card == card_id).update(update_sql)
         except:
             pass
 
@@ -433,6 +468,15 @@ class OperateDB:
         except:
             pass
         return case_list
+
+    def get_card_by_case(self, case_id):
+        card_list = list()
+        try:
+            relation = db.session.query(CaseRelatedCard.card).filter(CaseRelatedCard.case == case_id).all()
+            card_list = [card[0] for card in relation]
+        except Exception as e:
+            pass
+        return card_list
 
     def get_bugs(self, **args):
         maps = list()

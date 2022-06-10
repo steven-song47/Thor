@@ -159,18 +159,21 @@ def update_card():
             qa = request.json["qa"]
             db_operate.update_member(card_id, qa, "qa")
         actions = list()
-        for case in cases:
-            # 传入参数：id, case, state, level, type, auto, creator
-            action = {
-                "id": case["id"],
-                "case": case["case"],
-                "state": case["state"],
-                "level": case["level"],
-                "type": "case",
-                "auto": case["auto"],
-                "creator": qa,
-            }
-            actions.append(action)
+        # for case in cases:
+        #     # 传入参数：id, case, state, level, type, auto, creator
+        #     action = {
+        #         "id": case["id"],
+        #         "case": case["case"],
+        #         "state": case["state"],
+        #         "level": case["level"],
+        #         "type": "case",
+        #         "auto": case["auto"],
+        #         "creator": qa,
+        #     }
+        #     actions.append(action)
+        updated_cases = db_operate.update_cases(cases)
+        for case in updated_cases:
+            db_operate.update_relationship_card_and_case(card_id, case["id"], result=case["result"])
         for risk in risks:
             # 传入参数：id, risk, state, level, type
             action = {
