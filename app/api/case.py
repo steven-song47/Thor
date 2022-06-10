@@ -62,26 +62,8 @@ def upload_cases():
 @api.route("/case/updateCase", methods=["POST"])
 def update_case():
     if request.method == "POST":
-        case_id = request.args["id"]
-        case = request.args["case"]
-        level = request.args["level"]
-        tag = request.args["tag"]
-        state = request.args["result"]
-        card_number = request.args["card"]
-        auto = request.args["auto"]
-        creator = request.args["creator"]
-        case_dict = {
-            "Case Content": case,
-            "ID": case_id,
-            "Card Index": card_number,
-            "Test Result": state,
-            "Level": level,
-            "Tag": tag,
-            "Automation": True if auto == "Y" else False,
-            "Creator": creator,
-        }
         db_operate = OperateDB()
-        db_operate.update_case([case_dict])
+        db_operate.update_cases([dict(request.args)])
         return jsonify({"code": 200, "success": True})
 
 
