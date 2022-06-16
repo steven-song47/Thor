@@ -927,7 +927,10 @@ class Statistical:
                 left_bugs += card_left_bugs
                 if card_bugs == 0 and card["state"] == "test done":
                     good_cards += 1
-            good_rate = round(good_cards/len(self.done_cards)*100, 2)
+            if self.done_cards:
+                good_rate = round(good_cards / len(self.done_cards) * 100, 2)
+            else:
+                good_rate = 0
         return bugs, left_bugs, good_rate
 
     def _get_card_step_point(self, card_id):
