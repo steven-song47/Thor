@@ -38,6 +38,24 @@ def search_board():
         return jsonify({"code": 200, "success": True, "data": data})
 
 
+@api.route("/board/judgeSprintName", methods=["GET"])
+def judge_sprint_name_unique():
+    if request.method == "GET":
+        sprint_name = request.args["sprint"]
+        db_operate = OperateDB()
+        result = db_operate.judge_fields(sprint_name=sprint_name)
+        return jsonify({"code": 200, "success": True, "data": result})
+
+
+@api.route("/board/judgeCardIndex", methods=["GET"])
+def judge_card_index_unique():
+    if request.method == "GET":
+        card_index = request.args["index"]
+        db_operate = OperateDB()
+        result = db_operate.judge_fields(card_index=card_index)
+        return jsonify({"code": 200, "success": True, "data": result})
+
+
 @api.route("/board/getSprints", methods=["GET"])
 def get_sprints():
     if request.method == "GET":
@@ -159,18 +177,6 @@ def update_card():
             qa = request.json["qa"]
             db_operate.update_member(card_id, qa, "qa")
         actions = list()
-        # for case in cases:
-        #     # 传入参数：id, case, state, level, type, auto, creator
-        #     action = {
-        #         "id": case["id"],
-        #         "case": case["case"],
-        #         "state": case["state"],
-        #         "level": case["level"],
-        #         "type": "case",
-        #         "auto": case["auto"],
-        #         "creator": qa,
-        #     }
-        #     actions.append(action)
         updated_cases = db_operate.update_cases(cases)
         for case in updated_cases:
             db_operate.update_relationship_card_and_case(card_id, case["id"], result=case["result"])

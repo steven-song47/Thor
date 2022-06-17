@@ -56,6 +56,14 @@ class OperateDB:
         sprints = [sprint[0] for sprint in sprints]
         return sprints
 
+    def judge_fields(self, **args):
+        result = False
+        if "sprint_name" in args:
+            result = False if Sprint.query.filter(Sprint.name == args["sprint_name"]).count() else True
+        if "card_index" in args:
+            result = False if Card.query.filter(Card.number == args["card_index"]).count() else True
+        return result
+
     def get_sprintID_by_sprintName(self, sprint_name):
         sprint = db.session.query(Sprint.id).filter(Sprint.name == sprint_name).first()
         if sprint:
@@ -833,6 +841,7 @@ class Statistical:
             qa_cards = len(list(set(qa_pool)))
             dev_cards = len(list(set(dev_pool)))
             # print("date:", date, ", groom cards:", grooming_cards, ", dev cards:", dev_cards, ", qa cards:", qa_cards, ", done cards:", done_cards)
+            # 注意：这里埋了一个坑，dev time、qa time、done time三个时间不能是同一天，否则累计流图会出现负数的bug
             step_points.append({
                 "date": date[5:],
                 "value": grooming_cards-dev_cards,
