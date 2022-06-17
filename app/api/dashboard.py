@@ -156,7 +156,7 @@ def trend_data():
             db_operate = OperateDB()
             sprints = db_operate.get_sprints()
             current_sprint_index = sprints.index(current_sprint)
-            trend_sprints = sprints[:current_sprint_index+1]
+            trend_sprints = sprints[current_sprint_index:][::-1]
             for sprint in trend_sprints:
                 s = Statistical(sprint)
                 sprint_done_points = s.get_sprint_done_points()
