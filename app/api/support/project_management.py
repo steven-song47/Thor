@@ -330,7 +330,8 @@ class OperateDB:
                 case.create_time = now_time
                 case.review = "created"
                 case.effect = "active"
-                case.result = "Created"
+                # case.result = "Created"
+                case.result = args["result"]
                 case.creator = None
                 db.session.add(case)
                 db.session.flush()
