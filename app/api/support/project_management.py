@@ -732,6 +732,7 @@ class Statistical:
     def _get_card_step_cost_days(self, card_id):
         dev_days = list()
         qa_days = list()
+        done_date = 0
         card_log = self.db_operate.get_changeLog(card_id)[::-1]
         for index, log in enumerate(card_log):
             if log["current"] == "in dev":
@@ -741,21 +742,37 @@ class Statistical:
                         end_date = card_log[index+1]["update_time"].strftime("%Y-%m-%d")
                 else:
                     end_date = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d")
+                    print("[DEBUG] card_id:", card_id, ", end_date:", end_date)
                 if end_date:
                     begin_date = log["update_time"].strftime("%Y-%m-%d")
                     begin_date = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
                     end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
                     dev_days += get_date_list(begin_date, end_date)
-            if log["current"] == "in qa" and index != len(card_log)-1:
-                if card_log[index+1]["prev"] == "in qa":
+            # if log["current"] == "in qa" and index != len(card_log)-1:
+            #     if card_log[index+1]["prev"] == "in qa":
+            #         begin_date = log["update_time"].strftime("%Y-%m-%d")
+            #         end_date = card_log[index+1]["update_time"].strftime("%Y-%m-%d")
+            #         begin_date = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
+            #         end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+            #         qa_days += get_date_list(begin_date, end_date)
+            if log["current"] == "in qa":
+                end_date = ""
+                if index != len(card_log)-1:
+                    if card_log[index+1]["prev"] == "in qa":
+                        end_date = card_log[index+1]["update_time"].strftime("%Y-%m-%d")
+                else:
+                    end_date = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d")
+                if end_date:
                     begin_date = log["update_time"].strftime("%Y-%m-%d")
-                    end_date = card_log[index+1]["update_time"].strftime("%Y-%m-%d")
                     begin_date = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
                     end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
                     qa_days += get_date_list(begin_date, end_date)
-        # qa_days = list(set(qa_days) - (set(dev_days) & set(qa_days)))
+            if log["current"] == "test done" and index == len(card_log)-1:
+                done_date = log["update_time"].strftime("%Y-%m-%d")
+                done_date = datetime.datetime.strptime(done_date, "%Y-%m-%d")
+        # dev_days = list(set(dev_days) - (set(dev_days) & set(qa_days)))
         # print("card_id:", card_id, ", dev:", dev_days, ", qa:", qa_days)
-        return dev_days, qa_days
+        return dev_days, qa_days, done_date
 
     def get_sprint_plan_points(self):
         return self.sprint_data["points"]
@@ -835,13 +852,14 @@ class Statistical:
         for date in date_list:
             grooming_cards = sum([1 for card in self.all_cards if datetime_to_date(card["start_time"]) <=
                            datetime.datetime.strptime(date, "%Y-%m-%d")])
-            done_cards = sum([1 for card in self.done_cards if datetime_to_date(card["update_time"]) <=
+            done_cards = sum([1 for card in self.done_cards if self._get_card_step_cost_days(card["id"])[2] <=
                               datetime.datetime.strptime(date, "%Y-%m-%d")])
             qa_pool += [card["index"] for card in self.all_cards if date in card_qa_step_cost[card["id"]]]
             dev_pool += [card["index"] for card in self.all_cards if date in card_dev_step_cost[card["id"]]]
             qa_cards = len(list(set(qa_pool)))
             dev_cards = len(list(set(dev_pool)))
-            # print("date:", date, ", groom cards:", grooming_cards, ", dev cards:", dev_cards, ", qa cards:", qa_cards, ", done cards:", done_cards)
+            print("[INFO] date:", date, ", dev_pool:", list(set(dev_pool)), ", qa_pool:", list(set(qa_pool)))
+            print("[INFO] date:", date, ", groom cards:", grooming_cards, ", dev cards:", dev_cards, ", qa cards:", qa_cards, ", done cards:", done_cards)
             # 注意：这里埋了一个坑，dev time、qa time、done time三个时间不能是同一天，否则累计流图会出现负数的bug
             step_points.append({
                 "date": date[5:],
