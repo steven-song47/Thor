@@ -543,6 +543,7 @@ class OperateDB:
             card.state = args["state"]
         if "ac" in args:
             card.ac = args["ac"]
+        card.update_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db.session.commit()
         db.session.close()
 
@@ -742,7 +743,7 @@ class Statistical:
                         end_date = card_log[index+1]["update_time"].strftime("%Y-%m-%d")
                 else:
                     end_date = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d")
-                    print("[DEBUG] card_id:", card_id, ", end_date:", end_date)
+                    # print("[DEBUG] card_id:", card_id, ", end_date:", end_date)
                 if end_date:
                     begin_date = log["update_time"].strftime("%Y-%m-%d")
                     begin_date = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
@@ -858,8 +859,8 @@ class Statistical:
             dev_pool += [card["index"] for card in self.all_cards if date in card_dev_step_cost[card["id"]]]
             qa_cards = len(list(set(qa_pool)))
             dev_cards = len(list(set(dev_pool)))
-            print("[INFO] date:", date, ", dev_pool:", list(set(dev_pool)), ", qa_pool:", list(set(qa_pool)))
-            print("[INFO] date:", date, ", groom cards:", grooming_cards, ", dev cards:", dev_cards, ", qa cards:", qa_cards, ", done cards:", done_cards)
+            # print("[INFO] date:", date, ", dev_pool:", list(set(dev_pool)), ", qa_pool:", list(set(qa_pool)))
+            # print("[INFO] date:", date, ", groom cards:", grooming_cards, ", dev cards:", dev_cards, ", qa cards:", qa_cards, ", done cards:", done_cards)
             # 注意：这里埋了一个坑，dev time、qa time、done time三个时间不能是同一天，否则累计流图会出现负数的bug
             step_points.append({
                 "date": date[5:],
