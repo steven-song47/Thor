@@ -138,3 +138,30 @@ class CardStateChangeLog(db.Model):
     current = db.Column(db.String(50))
     update_time = db.Column(db.DateTime)
     operator = db.Column(db.String(50))
+
+
+class Project(db.Model):
+    __tablename__ = "project"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50))
+    robot = db.Column(db.String(500))
+    create_at = db.Column(db.DateTime)
+    points_data = db.Column(db.Boolean)
+    cards_data = db.Column(db.Boolean)
+    burn_down_chart = db.Column(db.Boolean)
+    cumulative_flow_chart = db.Column(db.Boolean)
+    point_overflow_rate_data = db.Column(db.Boolean)
+    commitment_fulfillment_rate_data = db.Column(db.Boolean)
+    good_card_rate_data = db.Column(db.Boolean)
+    average_test_costs_data = db.Column(db.Boolean)
+    bug_data = db.Column(db.Boolean)
+    left_bug_data = db.Column(db.Boolean)
+    test_coverage_data = db.Column(db.Boolean)
+    regression_test_data = db.Column(db.Boolean)
+    points_spent_per_card_chart = db.Column(db.Boolean)
+    percentage_of_points_delivered_chart = db.Column(db.Boolean)
+    trend_different_type_cards_chart = db.Column(db.Boolean)
+    trend_completion_points_chart = db.Column(db.Boolean)
+    trend_completion_cards_chart = db.Column(db.Boolean)
+    trend_bug_created_chart = db.Column(db.Boolean)
+

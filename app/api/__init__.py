@@ -9,3 +9,4 @@ from . import member
 from . import auto
 from . import board
 from . import dashboard
+from . import config

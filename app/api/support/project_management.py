@@ -674,6 +674,99 @@ class OperateDB:
         db.session.commit()
         db.session.close()
 
+    def add_project(self, **args):
+        project_id = ""
+        if set(args.keys()).issuperset({"name", "robot"}):
+            now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            try:
+                project = Project()
+                project.name = args["name"]
+                project.robot = args["robot"]
+                project.create_at = now_time
+                project.points_data = True
+                project.cards_data = True
+                project.burn_down_chart = True
+                project.cumulative_flow_chart = True
+                project.point_overflow_rate_data = args["point_overflow_rate_data"]
+                project.commitment_fulfillment_rate_data = args["commitment_fulfillment_rate_data"]
+                project.good_card_rate_data = args["good_card_rate_data"]
+                project.average_test_costs_data = args["average_test_costs_data"]
+                project.bug_data = args["bug_data"]
+                project.left_bug_data = args["left_bug_data"]
+                project.test_coverage_data = args["test_coverage_data"]
+                project.regression_test_data = args["regression_test_data"]
+                project.points_spent_per_card_chart = args["points_spent_per_card_chart"]
+                project.percentage_of_points_delivered_chart = args["percentage_of_points_delivered_chart"]
+                project.trend_different_type_cards_chart = args["trend_different_type_cards_chart"]
+                project.trend_completion_points_chart = args["trend_completion_points_chart"]
+                project.trend_completion_cards_chart = args["trend_completion_cards_chart"]
+                project.trend_bug_created_chart = args["trend_bug_created_chart"]
+                db.session.add(project)
+                db.session.flush()
+                project_id = project.id
+                db.session.commit()
+                db.session.close()
+            except Exception as e:
+                print(e)
+        else:
+            print("[func:add_project] 参数不匹配")
+        return project_id
+
+    def update_project(self, name, **args):
+        try:
+            db.session.query(Project).filter(Project.name == name).update(args)
+            db.session.commit()
+        except Exception as e:
+            print("[ERROR] project name: %s update fail (%s)" % (name, e))
+
+    def get_project(self, name):
+        project_data = dict()
+        try:
+            data = db.session.query(Project.name, Project.robot, Project.points_data, Project.cards_data,
+                                    Project.burn_down_chart, Project.cumulative_flow_chart,
+                                    Project.point_overflow_rate_data,
+                                    Project.commitment_fulfillment_rate_data, Project.good_card_rate_data,
+                                    Project.average_test_costs_data, Project.bug_data, Project.left_bug_data,
+                                    Project.test_coverage_data, Project.regression_test_data,
+                                    Project.points_spent_per_card_chart, Project.percentage_of_points_delivered_chart,
+                                    Project.trend_different_type_cards_chart, Project.trend_completion_points_chart,
+                                    Project.trend_completion_cards_chart, Project.trend_bug_created_chart). \
+                filter(Project.name == name).all()
+            project_data = {
+                "name": data[0],
+                "robot": data[1],
+                "points_data": data[2],
+                "cards_data": data[3],
+                "burn_down_chart": data[4],
+                "cumulative_flow_chart": data[5],
+                "point_overflow_rate_data": data[6],
+                "commitment_fulfillment_rate_data": data[7],
+                "good_card_rate_data": data[8],
+                "average_test_costs_data": data[9],
+                "bug_data": data[10],
+                "left_bug_data": data[11],
+                "test_coverage_data": data[12],
+                "regression_test_data": data[13],
+                "points_spent_per_card_chart": data[14],
+                "percentage_of_points_delivered_chart": data[15],
+                "trend_different_type_cards_chart": data[16],
+                "trend_completion_points_chart": data[17],
+                "trend_completion_cards_chart": data[18],
+                "trend_bug_created_chart": data[19],
+            }
+        except:
+            pass
+        return project_data
+
+    def get_project_list(self):
+        projects = list()
+        try:
+            projects = db.session.query(Project.name).order_by(Project.create_at.desc()).all()
+        except:
+            pass
+        projects = [project[0] for project in projects]
+        return projects
+
 
 class WechatMsg:
 
