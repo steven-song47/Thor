@@ -11,7 +11,7 @@ def search_cases():
     if request.method == "GET":
         args = request.args
         db_operate = OperateDB()
-        cases = db_operate.get_cases(**args)
+        cases = db_operate.get_cases(effect="active", **args)
         data = list()
         for case in cases:
             case_id = case["id"]
