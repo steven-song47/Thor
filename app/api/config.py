@@ -15,16 +15,22 @@ def get_projects():
 def get_config():
     if request.method == "GET":
         project_config = dict()
-        name = request.args["name"]
-        db_operate = OperateDB()
-        project = db_operate.get_project(name)
-        project_config = {
-            "name": project["name"],
-            "robot": project["robot"],
-            "basic_data": [project[""], project[""]],
-            "basic_chart": [project[""], project[""]],
-            "extra_data": [project[""], project[""], project[""], project[""], project[""], project[""]]
-        }
+        if "project" in request.args:
+            if not request.args["project"]:
+                db_operate = OperateDB()
+                name = db_operate.get_project_list()[0]
+            else:
+                name = request.args["project"]
+            db_operate = OperateDB()
+            project = db_operate.get_project(name)
+            if project:
+                project_config = {
+                    "name": project["name"],
+                    "robot": project["robot"],
+                    # "basic_data": [project[""], project[""]],
+                    # "basic_chart": [project[""], project[""]],
+                    # "extra_data": [project[""], project[""], project[""], project[""], project[""], project[""]]
+                }
         return jsonify({"code": 200, "success": True, "data": project_config})
 
 

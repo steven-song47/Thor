@@ -731,7 +731,7 @@ class OperateDB:
                                     Project.points_spent_per_card_chart, Project.percentage_of_points_delivered_chart,
                                     Project.trend_different_type_cards_chart, Project.trend_completion_points_chart,
                                     Project.trend_completion_cards_chart, Project.trend_bug_created_chart). \
-                filter(Project.name == name).all()
+                filter(Project.name == name).all()[0]
             project_data = {
                 "name": data[0],
                 "robot": data[1],
@@ -754,8 +754,8 @@ class OperateDB:
                 "trend_completion_cards_chart": data[18],
                 "trend_bug_created_chart": data[19],
             }
-        except:
-            pass
+        except Exception as e:
+            print(e)
         return project_data
 
     def get_project_list(self):
