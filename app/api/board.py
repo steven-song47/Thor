@@ -41,18 +41,24 @@ def search_board():
 @api.route("/board/judgeSprintName", methods=["GET"])
 def judge_sprint_name_unique():
     if request.method == "GET":
-        sprint_name = request.args["sprint"]
-        db_operate = OperateDB()
-        result = db_operate.judge_fields(sprint_name=sprint_name)
+        result = True
+        if "sprint" in request.args:
+            sprint_name = request.args["sprint"]
+            if sprint_name:
+                db_operate = OperateDB()
+                result = db_operate.judge_fields(sprint_name=sprint_name)
         return jsonify({"code": 200, "success": True, "data": result})
 
 
 @api.route("/board/judgeCardIndex", methods=["GET"])
 def judge_card_index_unique():
     if request.method == "GET":
-        card_index = request.args["index"]
-        db_operate = OperateDB()
-        result = db_operate.judge_fields(card_index=card_index)
+        result = True
+        if "index" in request.args:
+            card_index = request.args["index"]
+            if card_index:
+                db_operate = OperateDB()
+                result = db_operate.judge_fields(card_index=card_index)
         return jsonify({"code": 200, "success": True, "data": result})
 
 
@@ -225,6 +231,7 @@ def add_card():
             "title": request.json["title"],
             "type": request.json["type"],
             "point": request.json["point"],
+            "original_link": request.json["original_link"],
         }
         if "ac" in request.json:
             card_data["ac"] = request.json["ac"]
@@ -263,3 +270,11 @@ def add_sprint():
         }
         sprint_id = db_operate.add_sprint(**sprint_data)
         return jsonify({"code": 200, "success": True, "sprintID": sprint_id})
+
+
+@api.route("/board/getAllCards", methods=["GET"])
+def import_cards():
+    if request.method == "GET":
+        db_operate = OperateDB()
+        cards = db_operate.get_cards()
+        return jsonify({"code": 200, "success": True, "data": cards})

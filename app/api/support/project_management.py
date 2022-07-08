@@ -511,7 +511,7 @@ class OperateDB:
             maps.append(Card.state == args["state"])
         maps.append(Card.sprint == Sprint.id)
         result = db.session.query(Card.number, Card.title, Card.point, Card.start_time, Card.state, Sprint.name,
-                                  Card.id, Card.type, Card.ac, Card.update_time). \
+                                  Card.id, Card.type, Card.ac, Card.update_time, Card.original_link). \
             filter(*maps).order_by(Card.update_time.desc()).all()
         for card in result:
             card_data = dict()
@@ -525,6 +525,7 @@ class OperateDB:
             card_data["type"] = card[7]
             card_data["ac"] = card[8]
             card_data["update_time"] = card[9]
+            card_data["original_link"] = card[10]
             card_id = card[6]
             card_data["id"] = card_id
             members = db.session.query(CardMemberRelationship.member, CardMemberRelationship.role).filter(
