@@ -23,15 +23,14 @@ class Card(db.Model):
     membership = db.relationship("CardMemberRelationship", backref="card_membership")
     changelog = db.relationship("CardStateChangeLog", backref="card_changelog")
     relatedCase = db.relationship("CaseRelatedCard", backref="card_relatedCase")
-    relatedCard = db.relationship("CardRelatedCard", backref="card_relatedCard")
 
 
 class CardRelatedCard(db.Model):
     __tablename__ = "cardRelatedCard"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    case = db.Column(db.Integer, db.ForeignKey("case.id"))
-    card = db.Column(db.Integer, db.ForeignKey("card.id"))
-    state = db.Column(db.String(50))
+    card1 = db.Column(db.Integer, db.ForeignKey("card.id"))
+    card2 = db.Column(db.Integer, db.ForeignKey("card.id"))
+    operator = db.Column(db.String(50))
     create_time = db.Column(db.DateTime)
     update_time = db.Column(db.DateTime)
 

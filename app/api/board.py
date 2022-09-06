@@ -79,15 +79,15 @@ def open_card():
         card_data = db_operate.get_cards(index=card_index)[0]
         card_id = card_data["id"]
         risks = db_operate.get_actions("risk", card_id)
-        # cases = db_operate.get_actions("case", card_id)
-        bugs = db_operate.get_actions("bug", card_id)
         tasks = db_operate.get_actions("task", card_id)
         case_list = db_operate.get_case_by_card(card_id)
         cases = [db_operate.get_cases(id=case_id)[0] for case_id in case_list]
+        related_cards_id = db_operate.get_card_associated_cards(card_id)
+        related_cards = [db_operate.get_cards(id=card_id)[0] for card_id in related_cards_id]
         card_data["risk"] = risks
         card_data["case"] = cases
-        card_data["bug"] = bugs
         card_data["task"] = tasks
+        card_data["card"] = related_cards
         return jsonify({"code": 200, "success": True, "data": card_data})
 
 
@@ -167,8 +167,8 @@ def update_card():
         ac_comment = request.json["ac"]
         cases = request.json["case"]
         risks = request.json["risk"]
-        bugs = request.json["bug"]
         tasks = request.json["task"]
+        cards = request.json["card"]
         dev = None
         qa = None
 
@@ -196,18 +196,6 @@ def update_card():
                 "type": "risk",
             }
             actions.append(action)
-        for bug in bugs:
-            # 传入参数：id, bug, state, level, type, owner, tester
-            action = {
-                "id": bug["id"],
-                "bug": bug["bug"],
-                "state": bug["state"],
-                "level": bug["level"],
-                "type": "bug",
-                "owner": dev,
-                "tester": qa,
-            }
-            actions.append(action)
         for task in tasks:
             # 传入参数：id, task, state, type, owner
             action = {
@@ -219,6 +207,10 @@ def update_card():
             }
             actions.append(action)
         db_operate.update_actions(card_id, actions)
+        for related_card in cards:
+            related_card_id = related_card["id"]
+            if related_card_id != card_id:
+                db_operate.add_card_associated_cards(card1=card_id, card2=related_card_id)
         return jsonify({"code": 200, "success": True})
 
 

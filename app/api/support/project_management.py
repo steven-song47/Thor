@@ -509,6 +509,8 @@ class OperateDB:
             maps.append(Card.title == args["title"])
         elif "state" in args:
             maps.append(Card.state == args["state"])
+        elif "id" in args:
+            maps.append(Card.id == args["id"])
         maps.append(Card.sprint == Sprint.id)
         result = db.session.query(Card.number, Card.title, Card.point, Card.start_time, Card.state, Sprint.name,
                                   Card.id, Card.type, Card.ac, Card.update_time, Card.original_link). \
@@ -562,6 +564,31 @@ class OperateDB:
         card.start_time = now_time
         card.update_time = now_time
         db.session.add(card)
+        db.session.commit()
+        db.session.close()
+
+    def get_card_associated_cards(self, card_id):
+        card_id_list = list()
+        maps = list()
+        # 命中card1
+        maps.append(CardRelatedCard.card1 == card_id)
+        result = db.session.query(CardRelatedCard.card2).filter(*maps).all()
+        card_id_list = [item[0] for item in result]
+        # 命中card2
+        maps.append(CardRelatedCard.card2 == card_id)
+        result = db.session.query(CardRelatedCard.card1).filter(*maps).all()
+        card_id_list += [item[0] for item in result]
+        return card_id_list
+
+    def add_card_associated_cards(self, **args):
+        now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        crc = CardRelatedCard()
+        crc.create_time = now_time
+        crc.update_time = now_time
+        crc.card1 = args["card1"]
+        crc.card2 = args["card2"]
+        crc.operator = ""
+        db.session.add(crc)
         db.session.commit()
         db.session.close()
 
