@@ -264,32 +264,42 @@ class OperateDB:
                     db.session.commit()
         db.session.close()
 
-    def add_member(self, card_id, member_name):
-        member = db.session.query(Member.id, Member.dev, Member.qa).filter(Member.name == member_name).first()
-        member_id = member[0]
+    def add_member_of_card(self, card_id, member_list, role):
+        member_list = [db.session.query(Member.id).filter(Member.name == name).first()[0] for name in member_list]
         membership = CardMemberRelationship()
         membership.card = card_id
-        membership.member = member_id
-        if member[1] is True and member[2] is False:
-            membership.role = "dev"
-        elif member[1] is False and member[2] is True:
-            membership.role = "qa"
+        membership.role = role
         membership.create_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         membership.update_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if len(member_list) == 0:
+            pass
+        elif len(member_list) == 1:
+            membership.member = member_list[0]
+        elif len(member_list) == 2:
+            membership.member = member_list[0]
+            membership.member_pair = member_list[1]
         db.session.add(membership)
         db.session.commit()
         db.session.close()
 
-    def update_member(self, card_id, member_name, role):
-        member = db.session.query(Member.id).filter(Member.name == member_name).first()
-        member_id = member[0]
+    def update_member_of_card(self, card_id, member_list, role):
         if not CardMemberRelationship.query.filter_by(card=card_id, role=role).count():
-            self.add_member(card_id, member_name)
+            self.add_member_of_card(card_id, member_list, role)
         else:
             update_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            db.session.query(CardMemberRelationship).filter(CardMemberRelationship.card == card_id,
-                                                            CardMemberRelationship.role == role).update(
-                {"member": member_id, "update_time": update_time})
+            member_list = [db.session.query(Member.id).filter(Member.name == name).first()[0] for name in member_list]
+            if len(member_list) == 0:
+                db.session.query(CardMemberRelationship).filter(CardMemberRelationship.card == card_id,
+                                                                CardMemberRelationship.role == role).update(
+                    {"member": "", "member_pair": "", "update_time": update_time})
+            elif len(member_list) == 1:
+                db.session.query(CardMemberRelationship).filter(CardMemberRelationship.card == card_id,
+                                                                CardMemberRelationship.role == role).update(
+                    {"member": member_list[0], "member_pair": "", "update_time": update_time})
+            elif len(member_list) == 2:
+                db.session.query(CardMemberRelationship).filter(CardMemberRelationship.card == card_id,
+                                                                CardMemberRelationship.role == role).update(
+                    {"member": member_list[0], "member_pair": member_list[1], "update_time": update_time})
             db.session.commit()
             db.session.close()
 
@@ -530,13 +540,19 @@ class OperateDB:
             card_data["original_link"] = card[10]
             card_id = card[6]
             card_data["id"] = card_id
-            members = db.session.query(CardMemberRelationship.member, CardMemberRelationship.role).filter(
+            members = db.session.query(CardMemberRelationship.member, CardMemberRelationship.role,
+                                       CardMemberRelationship.member_pair).filter(
                 CardMemberRelationship.card == card_id).all()
+            devs = list()
+            qas = list()
             for member in members:
+                role_member = [db.session.query(Member.name).filter(Member.id == m).first()[0] for m in [member[0], member[2]] if m]
                 if member[1] == "dev":
-                    card_data["dev"] = db.session.query(Member.name).filter(Member.id == member[0]).first()[0]
+                    devs = role_member
                 else:
-                    card_data["qa"] = db.session.query(Member.name).filter(Member.id == member[0]).first()[0]
+                    qas = role_member
+            card_data["dev"] = devs
+            card_data["qa"] = qas
             table_data.append(card_data)
         return table_data
 

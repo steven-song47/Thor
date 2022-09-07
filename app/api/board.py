@@ -178,10 +178,10 @@ def update_card():
         db_operate.update_card(index, ac=ac_comment)
         if "dev" in request.json:
             dev = request.json["dev"]
-            db_operate.update_member(card_id, dev, "dev")
+            db_operate.update_member_of_card(card_id, dev, "dev")
         if "qa" in request.json:
             qa = request.json["qa"]
-            db_operate.update_member(card_id, qa, "qa")
+            db_operate.update_member_of_card(card_id, qa, "qa")
         actions = list()
         updated_cases = db_operate.update_cases(cases)
         for case in updated_cases:

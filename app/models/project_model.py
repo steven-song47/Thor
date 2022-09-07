@@ -53,6 +53,7 @@ class CardMemberRelationship(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     card = db.Column(db.Integer, db.ForeignKey("card.id"))
     member = db.Column(db.Integer, db.ForeignKey("member.id"))
+    member_pair = db.Column(db.Integer, db.ForeignKey("member.id"))
     role = db.Column(db.String(50))
     create_time = db.Column(db.DateTime)
     update_time = db.Column(db.DateTime)
