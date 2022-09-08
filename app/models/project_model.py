@@ -18,7 +18,6 @@ class Card(db.Model):
     original_link = db.Column(db.Text)
     # case = db.relationship("Case", backref="card_case")
     task = db.relationship("Task", backref="card_task")
-    bug = db.relationship("Bug", backref="card_bug")
     risk = db.relationship("Risk", backref="card_risk")
     membership = db.relationship("CardMemberRelationship", backref="card_membership")
     changelog = db.relationship("CardStateChangeLog", backref="card_changelog")
@@ -45,7 +44,7 @@ class Member(db.Model):
     active = db.Column(db.Boolean)
     email = db.Column(db.String(50))
     phone = db.Column(db.String(50))
-    cardship = db.relationship("CardMemberRelationship", backref="member_cardship")
+    # cardship = db.relationship("CardMemberRelationship", backref="member_cardship")
 
 
 class CardMemberRelationship(db.Model):
@@ -57,6 +56,8 @@ class CardMemberRelationship(db.Model):
     role = db.Column(db.String(50))
     create_time = db.Column(db.DateTime)
     update_time = db.Column(db.DateTime)
+    membership = db.relationship("Member", backref="member_id", foreign_keys=[member])
+    memberpairship = db.relationship("Member", backref="member_pair_id", foreign_keys=[member_pair])
 
 
 class Sprint(db.Model):
@@ -103,19 +104,6 @@ class CaseRelatedCard(db.Model):
     result = db.Column(db.String(50))
     operator = db.Column(db.String(50))
     state = db.Column(db.String(50))
-    create_time = db.Column(db.DateTime)
-    update_time = db.Column(db.DateTime)
-
-
-class Bug(db.Model):
-    __tablename__ = "bug"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    bug = db.Column(db.String(500))
-    card = db.Column(db.Integer, db.ForeignKey("card.id"))
-    state = db.Column(db.String(50))
-    level = db.Column(db.String(50))
-    owner = db.Column(db.String(50))
-    tester = db.Column(db.String(50))
     create_time = db.Column(db.DateTime)
     update_time = db.Column(db.DateTime)
 

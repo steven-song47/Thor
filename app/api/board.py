@@ -210,7 +210,7 @@ def update_card():
         for related_card in cards:
             related_card_id = related_card["id"]
             if related_card_id != card_id:
-                db_operate.add_card_associated_cards(card1=card_id, card2=related_card_id)
+                db_operate.update_card_associated_cards(card1=card_id, card2=related_card_id)
         return jsonify({"code": 200, "success": True})
 
 

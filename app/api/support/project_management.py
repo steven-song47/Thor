@@ -291,11 +291,11 @@ class OperateDB:
             if len(member_list) == 0:
                 db.session.query(CardMemberRelationship).filter(CardMemberRelationship.card == card_id,
                                                                 CardMemberRelationship.role == role).update(
-                    {"member": "", "member_pair": "", "update_time": update_time})
+                    {"member": None, "member_pair": None, "update_time": update_time})
             elif len(member_list) == 1:
                 db.session.query(CardMemberRelationship).filter(CardMemberRelationship.card == card_id,
                                                                 CardMemberRelationship.role == role).update(
-                    {"member": member_list[0], "member_pair": "", "update_time": update_time})
+                    {"member": member_list[0], "member_pair": None, "update_time": update_time})
             elif len(member_list) == 2:
                 db.session.query(CardMemberRelationship).filter(CardMemberRelationship.card == card_id,
                                                                 CardMemberRelationship.role == role).update(
@@ -596,17 +596,21 @@ class OperateDB:
         card_id_list += [item[0] for item in result]
         return card_id_list
 
-    def add_card_associated_cards(self, **args):
-        now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        crc = CardRelatedCard()
-        crc.create_time = now_time
-        crc.update_time = now_time
-        crc.card1 = args["card1"]
-        crc.card2 = args["card2"]
-        crc.operator = ""
-        db.session.add(crc)
-        db.session.commit()
-        db.session.close()
+    def update_card_associated_cards(self, **args):
+        card1 = args["card1"]
+        card2 = args["card2"]
+        card1_related = self.get_card_associated_cards(card1)
+        if card2 not in card1_related:
+            now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            crc = CardRelatedCard()
+            crc.create_time = now_time
+            crc.update_time = now_time
+            crc.card1 = args["card1"]
+            crc.card2 = args["card2"]
+            crc.operator = ""
+            db.session.add(crc)
+            db.session.commit()
+            db.session.close()
 
     def add_changeLog(self, card_id, prev, current):
         now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1064,21 +1068,19 @@ class Statistical:
         members = self._get_dev_members()
         member_points_data = {}.fromkeys(members, 0)
         for card in self.done_cards:
-            member_points_data[card["dev"]] += card["point"]
+            for dev_member in card["dev"]:
+                member_points_data[dev_member] += card["point"]
         member_points = [{"type": member, "value": member_points_data[member]} for member in member_points_data]
         return member_points
 
     def _get_card_bugs(self, card_id):
-        total_bugs = 0
-        left_bugs = 0
-        bugs = self.db_operate.get_bugs(card_id=card_id)
-        if bugs:
-            for bug in bugs:
-                if bug["state"] != "Ignored":
-                    total_bugs += 1
-                if bug["state"] not in ["Ignored", "Solved"]:
-                    left_bugs += 1
-        return total_bugs, left_bugs
+        cards = self.db_operate.get_card_associated_cards(card_id)
+        bug_sum = 0
+        for card_id in cards:
+            related_card = self.db_operate.get_cards(id=card_id)[0]
+            if related_card["type"] == "bug":
+                bug_sum += 1
+        return bug_sum
 
     def get_sprint_bugs(self):
         bugs = 0
@@ -1088,13 +1090,15 @@ class Statistical:
         if self.all_cards:
             for card in self.all_cards:
                 card_id = card["id"]
-                card_bugs, card_left_bugs = self._get_card_bugs(card_id)
-                bugs += card_bugs
-                left_bugs += card_left_bugs
-                if card_bugs == 0 and card["state"] == "test done":
+                if card["type"] == "bug":
+                    bugs += 1
+                    if card["state"] != "test done":
+                        left_bugs += 1
+                bug_tag = self._get_card_bugs(card_id)
+                if not bug_tag:
                     good_cards += 1
-            if self.done_cards:
-                good_rate = round(good_cards / len(self.done_cards) * 100, 2)
+            if self.all_cards:
+                good_rate = round(good_cards / len(self.all_cards) * 100, 2)
             else:
                 good_rate = 0
         return bugs, left_bugs, good_rate
